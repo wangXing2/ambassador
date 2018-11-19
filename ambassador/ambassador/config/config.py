@@ -74,6 +74,7 @@ class Config:
             # with our ACResource class.
             schema_dir_path = resource_filename(Requirement.parse("ambassador"), "schemas")
 
+        self.statsd: bool = (os.environ.get('STATSD_ENABLED', False).lower() == 'true')
         self.schema_dir_path = schema_dir_path
 
         self.logger = logging.getLogger("ambassador.config")

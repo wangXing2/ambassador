@@ -62,6 +62,22 @@ class V2Bootstrap(dict):
             assert ratelimit.cluster
             clusters.append(V2Cluster(config, ratelimit.cluster))
 
+        if config.ir.statsd:
+            self['stats_sinks'] = [
+                {
+                    'name': 'envoy.statsd',
+                    'config': {
+                        'address': {
+                            'socket_address': {
+                                'protocol': 'UDP',
+                                'address': '127.0.0.1',
+                                'port_value': 8125
+                            }
+                        }
+                    }
+                }
+            ]
+
         self['static_resources']['clusters'] = clusters
 
     @classmethod
