@@ -69,7 +69,7 @@ class V1Config (EnvoyConfig):
             d[svc_name] = dict(self.grpc_services[svc_name])
 
         if self.statsd and self.statsd.get('enabled', False):
-            d['stats_flush_interval_ms'] = 1000
+            d['stats_flush_interval_ms'] = 1
             d['statsd_udp_ip_address'] = '127.0.0.1:8125'
 
         return d
