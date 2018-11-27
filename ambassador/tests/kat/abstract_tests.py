@@ -124,7 +124,7 @@ class AmbassadorTest(Test):
         if DEV:
             return self.format(AMBASSADOR_LOCAL)
         else:
-            return self.format(manifests.AMBASSADOR, image=os.environ["AMBASSADOR_DOCKER_IMAGE"])
+            return self.format(manifests.AMBASSADOR, image=os.environ["AMBASSADOR_DOCKER_IMAGE"], envs="")
 
     # Will tear this out of the harness shortly
     @property
