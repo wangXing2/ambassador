@@ -950,7 +950,7 @@ service: http://{self.target.path.k8s}
         for i in range(1000):
             yield Query(self.url(self.name + "/"))
 
-        yield Query("http://statsd-sink/render?format=json&target=summarize(stats_counts.envoy.cluster.cluster_httpbin_org_80.internal.upstream_rq_200,'1hour','sum',true)&from=-1hour")
+        yield Query("http://statsd-sink/render?format=json&target=summarize(stats_counts.envoy.cluster.cluster_httpbin_org_80.internal.upstream_rq_200,'1hour','sum',true)&from=-1hour", phase=2)
 
     def check(self):
         # for r in self.results:
