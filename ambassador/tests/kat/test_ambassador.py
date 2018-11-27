@@ -954,7 +954,8 @@ service: http://{self.target.path.k8s}
 
     def check(self):
         # for r in self.results:
-        assert self.results[-1].json[0]['datapoints'][0][0] == 100
+        # assert self.results[-1].json[0]['datapoints'][0][0] == 100
+        assert self.results[-1].json == 100
 
 
 # $ curl -s "http://192.168.39.16:31599/render?format=json&target=summarize(stats_counts.envoy.cluster.cluster_httpbin_org_80.internal.upstream_rq_200,'1hour','sum',true)&from=-1hour" | jq .
