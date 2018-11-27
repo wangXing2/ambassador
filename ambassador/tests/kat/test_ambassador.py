@@ -894,7 +894,7 @@ class StatsdTest(AmbassadorTest):
       value: 'true'
 """
 
-        return super().manifests().format(envs=envs) + """
+        return self.format(AMBASSADOR, image=os.environ["AMBASSADOR_DOCKER_IMAGE"], envs=envs) + """
 ---
 apiVersion: extensions/v1beta1
 kind: Deployment
