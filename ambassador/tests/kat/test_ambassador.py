@@ -1,9 +1,11 @@
 import json
 import pytest
+import os
 
 from typing import ClassVar, Dict, Sequence, Tuple, Union
 
 from kat.harness import variants, Name, Query, Runner, Test
+from kat.manifests import AMBASSADOR
 
 from abstract_tests import DEV, AmbassadorTest, HTTP
 from abstract_tests import MappingTest, OptionTest, ServiceType, Node
@@ -881,6 +883,92 @@ ambassador_id: {amb_id}
         yield Query(self.url("missme/"), expected=404)
         yield Query(self.url("missme-array/"), expected=404)
 
+
+class StatsdTest(AmbassadorTest):
+    def init(self):
+        self.target = HTTP()
+
+    def manifests(self) -> str:
+        envs = """
+    - name: STATSD_ENABLED
+      value: 'true'
+"""
+
+        return super().manifests() + self.format(AMBASSADOR, image=os.environ["AMBASSADOR_DOCKER_IMAGE"], envs=envs) + """
+---
+apiVersion: extensions/v1beta1
+kind: Deployment
+metadata:
+  creationTimestamp: null
+  name: statsd-sink
+spec:
+  replicas: 1
+  strategy: {}
+  template:
+    metadata:
+      creationTimestamp: null
+      labels:
+        service: statsd-sink
+    spec:
+      containers:
+      - name: statsd-sink
+        image: hopsoft/graphite-statsd:latest
+        resources: {}
+      restartPolicy: Always
+status: {}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  creationTimestamp: null
+  labels:
+    service: statsd-sink
+  name: statsd-sink
+spec:
+  ports:
+  - protocol: UDP
+    port: 8125
+    name: statsd-metrics
+  - protocol: TCP
+    port: 80
+    name: graphite-www
+  selector:
+    service: statsd-sink
+"""
+
+    def config(self):
+        yield self.target, self.format("""
+---
+apiVersion: ambassador/v0
+kind:  Mapping
+name:  {self.name}
+prefix: /{self.name}/
+service: http://{self.target.path.k8s}
+""")
+
+    def queries(self):
+        for i in range(100):
+            yield Query(self.url(self.name + "/"))
+
+        yield Query("http://statsd-sink/render?format=json&target=summarize(stats_counts.envoy.cluster.cluster_httpbin_org_80.internal.upstream_rq_200,'1hour','sum',true)&from=-1hour")
+
+    def check(self):
+        # for r in self.results:
+        assert self.results[100].json[0]['datapoints'][0][0] == 100
+
+
+# $ curl -s "http://192.168.39.16:31599/render?format=json&target=summarize(stats_counts.envoy.cluster.cluster_httpbin_org_80.internal.upstream_rq_200,'1hour','sum',true)&from=-1hour" | jq .
+# [
+#   {
+#     "target": "summarize(stats_counts.envoy.cluster.cluster_httpbin_org_80.internal.upstream_rq_200, \"1hour\", \"sum\", true)",
+#     "datapoints": [
+#       [
+#         34,
+#         1542730230
+#       ]
+#     ]
+#   }
+# ]
 
 
 # pytest will find this because Runner is a toplevel callable object in a file
